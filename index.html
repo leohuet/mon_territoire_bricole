@@ -66,11 +66,14 @@
     const text = await response.text();
     const lines = text.split("\n");
     lines.forEach(line => {
-      const [lat, lng, description, image_url, audio_url] = line.split(",");
+      const [dbIndex, lat, lng, lat2, lng2, description, image_url, audio_url] = line.split(",");
+      console.log(description, image_url, audio_url);
+      if(description == undefined || description == ""){
+        return;
+      }
       if(description.startsWith("image")){
-        const [lat2, lng2] = [parseFloat(lines[index + 1].split(",")[0]), parseFloat(lines[index + 1].split(",")[1])];
-        const image_url_full = image_url ? mediaURL + "static/uploads/" + image_url : null;
-        const audio_url_full = audio_url ? mediaURL + "static/uploads/" + audio_url : null;
+        const image_url_full = image_url ? mediaURL + image_url.substring(2, image_url.length) : null;
+        const audio_url_full = audio_url ? mediaURL + audio_url.substring(2, audio_url.length) : null;
         addImageOver(parseFloat(lat), parseFloat(lng), lat2, lng2, {
           description,
           image_url: image_url_full,
@@ -78,8 +81,8 @@
         });
       }
       else{
-        const image_url_full = image_url ? mediaURL + "static/uploads/" + image_url : null;
-        const audio_url_full = audio_url ? mediaURL + "static/uploads/" + audio_url : null;
+        const image_url_full = image_url ? mediaURL + image_url.substring(2, image_url.length) : null;
+        const audio_url_full = audio_url ? mediaURL + audio_url.substring(2, audio_url.length) : null;
         addMarker(icons[index], parseFloat(lat), parseFloat(lng), {
           description,
           image_url: image_url_full,
@@ -127,7 +130,7 @@
   function addImageOver(lat, lng, lat2, lng2, data){
     var newImageOver = L.imageOverlay(data.image_url, [[lat, lng], [lat2, lng2]]);
     objOverlays[data.description] = newImageOver;
-    ctlLayers.addOverlay(newImageOver);
+    newImageOver.addTo(themap);
   }
 
   function loadGPX(filename, data, color, markerURL){
