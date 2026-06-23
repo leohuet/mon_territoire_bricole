@@ -44,6 +44,7 @@
 </body>
 <script type="module">
   const baseURL = "http://127.0.0.1:8000/";
+  const rawURL = "https://raw.githubusercontent.com/leohuet/mon_territoire_bricole/refs/heads/main/";
   const info = L.control();
   var gpxTraces = [];
   const colors = ["red", "green", "blue", "pink", "orange", "yellow", "aqua", "violet", "hotpink", "chartreuse",
@@ -79,19 +80,10 @@
     //     }
     //   });
     // });
-    // for(var i=0; i < gpxFiles.length; i++){
-    //   fetch("static/traces/" + gpxFiles[i])
-    //   .then(res => res.json())
-    //   .then(data => {
-    //     loadGPX(data, colors[i], "flag.png");
-    //     ctlLayers = L.control.layers(objBasemaps, objOverlays).addTo(themap);
-    //   });
-    // }
-    const res = await fetch('/manifest.json');
-    const files = await res.json();
-    files.forEach(f => {
-      console.log(f.name, f.path);
-    });
+    for(var i=0; i < gpxFiles.length; i++){
+      loadGPX(gpxFiles[i], rawURL + 'static/traces/' + gpxFiles[i], colors[i], "flag.png");
+    }
+    ctlLayers = L.control.layers(objBasemaps, objOverlays).addTo(themap);
   };
 
   function addMarker(icon, lat, lng, data) {
@@ -129,17 +121,14 @@
     ctlLayers.addOverlay(newImageOver);
   }
 
-  function loadGPX(filename, color, markerURL){
+  function loadGPX(filename, data, color, markerURL){
     // URL to your GPX file or the GPX itself as a XML string.
-    // var trace = gpxTraces[Math.floor(Math.random() * gpxTraces.length)];
-    const url = baseURL + 'static/traces/' + filename;
-
-    var gpx = new L.GPX(url, {
+    var gpx = new L.GPX(data, {
       async: true,
       polyline_options: { color: color },
       markers: {
-      startIcon: baseURL + 'static/uploads/' +  markerURL,
-      endIcon: baseURL + 'static/uploads/' +  markerURL
+      startIcon: rawURL + 'static/uploads/' +  markerURL,
+      endIcon: rawURL + 'static/uploads/' +  markerURL
     }
     }).on('loaded', (e) => {
       themap.fitBounds(e.target.getBounds());
