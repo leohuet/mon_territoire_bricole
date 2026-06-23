@@ -67,13 +67,12 @@
     const lines = text.split("\n");
     lines.forEach(line => {
       const [dbIndex, lat, lng, lat2, lng2, description, image_url, audio_url] = line.split(",");
-      console.log(image_url);
       if(description == undefined || description == ""){
         return;
       }
       if(description.startsWith("image")){
         const image_url_full = image_url ? mediaURL + image_url.substring(2, image_url.length) : null;
-        const audio_url_full = audio_url ? mediaURL + audio_url.substring(2, audio_url.length) : null;
+        const audio_url_full = audio_url && audio_url.substring(0, audio_url.length - 1).endsWith(".mp3") ? mediaURL + audio_url.substring(2, audio_url.length) : null;
         addImageOver(parseFloat(lat), parseFloat(lng), lat2, lng2, {
           description,
           image_url: image_url_full,
@@ -82,7 +81,7 @@
       }
       else{
         const image_url_full = image_url ? mediaURL + image_url.substring(2, image_url.length) : null;
-        const audio_url_full = audio_url ? mediaURL + audio_url.substring(2, audio_url.length) : null;
+        const audio_url_full = audio_url && audio_url.substring(0, audio_url.length - 1).endsWith(".mp3") ? mediaURL + audio_url.substring(2, audio_url.length) : null;
         addMarker(icons[index], parseFloat(lat), parseFloat(lng), {
           description,
           image_url: image_url_full,
@@ -115,7 +114,7 @@
     if (data.image_url) {
       popupContent += `<img src="${data.image_url}" width="300"><br>`;
     }
-    if(data.audio_url && data.audio_url.endsWith(".mp3")) {
+    if(data.audio_url) {
       popupContent += `
         <audio controls>
         <source src="${data.audio_url}" type="audio/mpeg">
