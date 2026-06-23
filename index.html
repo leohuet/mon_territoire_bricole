@@ -67,7 +67,7 @@
     const lines = text.split("\n");
     lines.forEach(line => {
       const [dbIndex, lat, lng, lat2, lng2, description, image_url, audio_url] = line.split(",");
-      console.log(description, image_url, audio_url);
+      console.log(image_url);
       if(description == undefined || description == ""){
         return;
       }
