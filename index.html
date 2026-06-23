@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    <link rel="stylesheet" href="static/coordinates/dist/Leaflet.Coordinates-0.1.5.css">
+    <link rel="stylesheet" href="static/coordinates/dist/Leaflet.Coordinates-0.1.5.ie.css">
+    <script src="static/coordinates/dist/Leaflet.Coordinates-0.1.5.src.js"></script>
+    <script src="static/leaflet-gpx-2.0.0/gpx.js"></script>
+
+    <meta name="viewport" content="width=device-width,
+        initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <style>
+        #themap {
+            position: relative;
+            width: 100.0%;
+            height: 100.0%;
+            left: 0.0%;
+            top: 0.0%;
+        }
+    </style>
+
+</head>
+<body>
+
+    <div id="themap" ></div>
+
+</body>
+<script type="module">
+  const baseURL = "http://127.0.0.1:8000/";
+  const info = L.control();
+  var gpxTraces = [];
+  const colors = ["red", "green", "blue", "pink", "orange", "yellow", "aqua", "violet", "hotpink", "chartreuse",
+                  "cyan", "magenta", "maroon", "navy", "purple"];
+  const icons = ["00_tyler.png", "01_sydney.png", "02_sohan.png", "03_shauna.png", "04_noemie.png", "05_nael.png",
+                "06_mael.png", "07_lylou.png", "08_lya.png", "09_lilou.png", "10_julia.png", "11_jules.png",
+                "12_james.png", "13_ethan.png", "14_bradley.png", "15_arda.png", "16_anna.png"];
+  const gpxFiles = ["ARDA_3.gpx", "BRADLEY_3.gpx", "ERYNN_3.gpx", "ETHAN_3.gpx", "JULES_3.gpx", "JULIA_3.gpx", 
+                    "LILOU_3.gpx", "LYA_3.gpx", "LYLOU_3.gpx", "MAEL_3.gpx", "moyenne_2.gpx", "NAEL_3.gpx", 
+                    "SHAUNA_3.gpx", "SOHAN_3.gpx", "SYDNEY_3.gpx"]
+  const objOverlays = {};
+  var ctlLayers;
+  var gpxs = [];
+
+  window.onload = async (event) => {
+    var index = 0;
+    // fetch(baseURL + "localisations")
+    // .then(res => res.json())
+    // .then(data => {
+    //   data.localisations.forEach(loc => {
+    //     if(loc.lat2 != 0){
+    //       var newImageOver = L.imageOverlay(loc.image_url, [[loc.lat, loc.lng], [loc.lat2, loc.lng2]]);
+    //       objOverlays[loc.description] = newImageOver;
+    //       newImageOver.addTo(themap);
+    //     }
+    //     else{
+    //       addMarker(icons[index], loc.lat, loc.lng, {
+    //         description: loc.description,
+    //         image_url: loc.image_url,
+    //         audio_url: loc.audio_url
+    //       });
+    //       index += 1;
+    //     }
+    //   });
+    // });
+    // for(var i=0; i < gpxFiles.length; i++){
+    //   fetch("static/traces/" + gpxFiles[i])
+    //   .then(res => res.json())
+    //   .then(data => {
+    //     loadGPX(data, colors[i], "flag.png");
+    //     ctlLayers = L.control.layers(objBasemaps, objOverlays).addTo(themap);
+    //   });
+    // }
+    const res = await fetch('/manifest.json');
+    const files = await res.json();
+    files.forEach(f => {
+      console.log(f.name, f.path);
+    });
+  };
+
+  function addMarker(icon, lat, lng, data) {
+    var sizex = 87;
+    var sizey = 48;
+    if(icon == "03_shauna.png" || icon == "09_lilou.png"){
+        sizex = 108;
+        sizey = 60;
+    }
+    var greenIcon = L.icon({
+        iconUrl: baseURL + 'static/uploads/markers/' + icon,
+        iconSize:     [87, 48], // size of the icon
+        iconAnchor:   [40, 10], // point of the icon which will correspond to marker's location
+        popupAnchor:  [0, 0] // point from which the popup should open relative to the iconAnchor
+    });
+    let popupContent = `<b>${data.description || ""}</b><br>`;
+    if (data.image_url) {
+      popupContent += `<img src="${data.image_url}" width="300"><br>`;
+    }
+    if (data.audio_url) {
+      popupContent += `
+        <audio controls>
+        <source src="${data.audio_url}" type="audio/mpeg">
+        </audio>
+      `;
+    }
+    L.marker([lat, lng], {icon: greenIcon})
+    .addTo(themap)
+    .bindPopup(popupContent);
+  }
+
+  function addImageOver(lat, lng, lat2, lng2, data){
+    var newImageOver = L.imageOverlay(data.image_url, [[lat, lng], [lat2, lng2]]);
+    objOverlays[data.description] = newImageOver;
+    ctlLayers.addOverlay(newImageOver);
+  }
+
+  function loadGPX(filename, color, markerURL){
+    // URL to your GPX file or the GPX itself as a XML string.
+    // var trace = gpxTraces[Math.floor(Math.random() * gpxTraces.length)];
+    const url = baseURL + 'static/traces/' + filename;
+
+    var gpx = new L.GPX(url, {
+      async: true,
+      polyline_options: { color: color },
+      markers: {
+      startIcon: baseURL + 'static/uploads/' +  markerURL,
+      endIcon: baseURL + 'static/uploads/' +  markerURL
+    }
+    }).on('loaded', (e) => {
+      themap.fitBounds(e.target.getBounds());
+    });
+    objOverlays[filename.split("_")[0]] = gpx;
+    if(filename == "moyenne_2.gpx"){
+        console.log("moyenne");
+        gpx.addTo(themap);
+    }
+  }
+
+  var themap = L.map("themap",
+    {
+      center: [49.852867258451205, 4.768529103377097],
+      zoom: 14,
+      zoomControl: true,
+      preferCanvas: false,
+    }
+  );
+
+  var OSM = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+    maxZoom: 20,
+    attribution: '&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  });
+  var Thunderforest_Pioneer = L.tileLayer('https://api.thunderforest.com/pioneer/{z}/{x}/{y}{r}.png?apikey={apikey}', {
+    attribution: '&copy; <a href="http://www.thunderforest.com/">Thunderforest</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    apikey: '082fedd840744bba9a58c66f8e187482',
+    maxZoom: 22
+  });
+  var Stadia_StamenWatercolor = L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.{ext}', {
+    minZoom: 1,
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://www.stamen.com/" target="_blank">Stamen Design</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    ext: 'jpg'
+  });
+  var WaymarkedTrails_hiking = L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map style: &copy; <a href="https://waymarkedtrails.org">waymarkedtrails.org</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+  });
+  var GeoportailFrance_orthos = L.tileLayer('https://data.geopf.fr/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE={style}&TILEMATRIXSET=PM&FORMAT={format}&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+    attribution: '<a target="_blank" href="https://www.geoportail.gouv.fr/">Geoportail France</a>',
+    minZoom: 2,
+    maxZoom: 19,
+    format: 'image/jpeg',
+    style: 'normal'
+  });
+
+  const objBasemaps = {
+    "Open Street Maps": OSM,
+    "Old school": Thunderforest_Pioneer,
+    "Imagery": GeoportailFrance_orthos,
+    "Watercolor": Stadia_StamenWatercolor
+  };
+
+  objOverlays["Waymark hike"] = WaymarkedTrails_hiking;
+
+  OSM.addTo(themap);
+
+  L.control.scale().addTo(themap);
+  L.control.coordinates().addTo(themap);
+
+  themap.on("dblclick", function(e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    const description = prompt("Description:");
+    if(description == null){
+      return;
+    }
+    if(description.startsWith("image")){
+      let coord_end = prompt("Coordinates:");
+      let lat_lng_end = [parseFloat(coord_end.split(",")[0]), parseFloat(coord_end.split(",")[1])];
+      let image_url = prompt("Image URL:");
+      if(image_url != ""){
+        image_url = baseURL + "static/uploads/" + image_url;
+      }
+      const audio_url = "false";
+      fetch(baseURL + "localisations", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          lat: lat,
+          lng: lng,
+          lat2: lat_lng_end[0],
+          lng2: lat_lng_end[1],
+          description,
+          image_url,
+          audio_url
+        })
+      })
+      .then(res => res.json())
+      .then(() => {
+        addImageOver(lat, lng, lat_lng_end[0], lat_lng_end[1], { description, image_url, audio_url });
+      });
+    }
+    else{
+      let image_url = prompt("Image URL (optional):");
+      let audio_url = prompt("Audio URL (optional):");
+
+      if(image_url != ""){
+        image_url = baseURL + "static/uploads/" + image_url;
+      }
+      if(audio_url != ""){
+        audio_url = baseURL + "static/uploads/" + audio_url;
+      }
+
+      fetch(baseURL + "localisations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          lat: lat,
+          lng: lng,
+          lat2: 0,
+          lng2: 0,
+          description,
+          image_url,
+          audio_url
+        })
+      })
+      .then(res => res.json())
+      .then(() => {
+        addMarker(lat, lng, { description, image_url, audio_url });
+      });
+    }
+  });
+
+</script>
