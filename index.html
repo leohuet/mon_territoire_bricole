@@ -45,6 +45,7 @@
 <script type="module">
   const baseURL = "http://127.0.0.1:8000/";
   const rawURL = "https://raw.githubusercontent.com/leohuet/mon_territoire_bricole/refs/heads/main/";
+  const mediaURL = "https://media.githubusercontent.com/media/leohuet/mon_territoire_bricole/refs/heads/main/";
   const info = L.control();
   var gpxTraces = [];
   const colors = ["red", "green", "blue", "pink", "orange", "yellow", "aqua", "violet", "hotpink", "chartreuse",
@@ -61,25 +62,33 @@
 
   window.onload = async (event) => {
     var index = 0;
-    // fetch(baseURL + "localisations")
-    // .then(res => res.json())
-    // .then(data => {
-    //   data.localisations.forEach(loc => {
-    //     if(loc.lat2 != 0){
-    //       var newImageOver = L.imageOverlay(loc.image_url, [[loc.lat, loc.lng], [loc.lat2, loc.lng2]]);
-    //       objOverlays[loc.description] = newImageOver;
-    //       newImageOver.addTo(themap);
-    //     }
-    //     else{
-    //       addMarker(icons[index], loc.lat, loc.lng, {
-    //         description: loc.description,
-    //         image_url: loc.image_url,
-    //         audio_url: loc.audio_url
-    //       });
-    //       index += 1;
-    //     }
-    //   });
-    // });
+    const response = await fetch(rawURL + "data.csv");
+    const text = await response.text();
+    const lines = text.split("\n");
+    lines.forEach(line => {
+      const [lat, lng, description, image_url, audio_url] = line.split(",");
+      if(description.startsWith("image")){
+        const [lat2, lng2] = [parseFloat(lines[index + 1].split(",")[0]), parseFloat(lines[index + 1].split(",")[1])];
+        const image_url_full = image_url ? mediaURL + "static/uploads/" + image_url : null;
+        const audio_url_full = audio_url ? mediaURL + "static/uploads/" + audio_url : null;
+        addImageOver(parseFloat(lat), parseFloat(lng), lat2, lng2, {
+          description,
+          image_url: image_url_full,
+          audio_url: audio_url_full
+        });
+      }
+      else{
+        const image_url_full = image_url ? mediaURL + "static/uploads/" + image_url : null;
+        const audio_url_full = audio_url ? mediaURL + "static/uploads/" + audio_url : null;
+        addMarker(icons[index], parseFloat(lat), parseFloat(lng), {
+          description,
+          image_url: image_url_full,
+          audio_url: audio_url_full
+        });
+        index += 1;
+      }
+    });
+
     for(var i=0; i < gpxFiles.length; i++){
       loadGPX(gpxFiles[i], rawURL + 'static/traces/' + gpxFiles[i], colors[i], "flag.png");
     }
@@ -94,7 +103,7 @@
         sizey = 60;
     }
     var greenIcon = L.icon({
-        iconUrl: baseURL + 'static/uploads/markers/' + icon,
+        iconUrl: mediaURL + 'static/uploads/markers/' + icon,
         iconSize:     [87, 48], // size of the icon
         iconAnchor:   [40, 10], // point of the icon which will correspond to marker's location
         popupAnchor:  [0, 0] // point from which the popup should open relative to the iconAnchor
@@ -127,8 +136,8 @@
       async: true,
       polyline_options: { color: color },
       markers: {
-      startIcon: rawURL + 'static/uploads/' +  markerURL,
-      endIcon: rawURL + 'static/uploads/' +  markerURL
+      startIcon: mediaURL + 'static/uploads/' +  markerURL,
+      endIcon: mediaURL + 'static/uploads/' +  markerURL
     }
     }).on('loaded', (e) => {
       themap.fitBounds(e.target.getBounds());
