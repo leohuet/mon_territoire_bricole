@@ -115,7 +115,7 @@
     if (data.image_url) {
       popupContent += `<img src="${data.image_url}" width="300"><br>`;
     }
-    if (data.audio_url) {
+    if(data.audio_url && data.audio_url.endsWith(".mp3")) {
       popupContent += `
         <audio controls>
         <source src="${data.audio_url}" type="audio/mpeg">
